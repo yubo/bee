@@ -129,9 +129,10 @@ func generateDocs(curpath string) {
 							if selName := v.Fun.(*ast.SelectorExpr).Sel.String(); selName != "NewNamespace" {
 								continue
 							}
-							version, params := analisysNewNamespace(v)
-							if rootapi.BasePath == "" && version != "" {
-								rootapi.BasePath = version
+							nsPath, params := analisysNewNamespace(v)
+							if rootapi.BasePath == "" {
+								//rootapi.BasePath = version
+								rootapi.BasePath = "/"
 							}
 							for _, p := range params {
 								switch pp := p.(type) {
@@ -143,7 +144,8 @@ func generateDocs(curpath string) {
 											switch pp := sp.(type) {
 											case *ast.CallExpr:
 												if pp.Fun.(*ast.SelectorExpr).Sel.String() == "NSInclude" {
-													controllerName = analisysNSInclude(s, pp)
+													//controllerName = analisysNSInclude(s, pp)
+													controllerName = analisysNSInclude(fmt.Sprintf("%s%s", nsPath, s), pp)
 													if v, ok := controllerComments[controllerName]; ok {
 														rootapi.Tags = append(rootapi.Tags, swagger.Tag{
 															Name:        strings.Trim(s, "/"),
@@ -154,7 +156,7 @@ func generateDocs(curpath string) {
 											}
 										}
 									} else if selname == "NSInclude" {
-										controllerName = analisysNSInclude("", pp)
+										controllerName = analisysNSInclude(nsPath, pp)
 										if v, ok := controllerComments[controllerName]; ok {
 											rootapi.Tags = append(rootapi.Tags, swagger.Tag{
 												Name:        controllerName, // if the NSInclude has no prefix, we use the controllername as the tag
